@@ -1,5 +1,7 @@
 import os from 'os';
 import config from '../config/config.js';
+import { v4 as uuidv4 } from 'uuid';
+import { randomInt } from 'crypto';
 
 const getSystemHealth = () => {
     return {
@@ -20,4 +22,11 @@ const getApplicationHealth = () => {
     };
 };
 
-export { getSystemHealth, getApplicationHealth };
+const generateRandomId = () => uuidv4();
+
+const generateOtp = (length) => {
+    const min = Math.pow(10, length - 1);
+    const max = Math.pow(10, length) - 1;
+    return randomInt(min, max).toString();
+};
+export { getSystemHealth, getApplicationHealth, generateRandomId, generateOtp };

@@ -37,7 +37,7 @@
         "prettier": "^3.5.3"
     },
     "dependencies": {
-        "bcrypt": "^5.1.1",
+        "bcryptjs": "^3.0.2",
         "colorette": "^2.0.20",
         "cors": "^2.8.5",
         "cross-env": "^7.0.3",
@@ -46,10 +46,11 @@
         "helmet": "^8.1.0",
         "joi": "^17.13.3",
         "jsonwebtoken": "^9.0.2",
-        "libphonenumber-js": "^1.12.6",
         "mongoose": "^8.13.1",
         "rate-limiter-flexible": "^6.2.1",
+        "resend": "^4.2.0",
         "ts-migrate-mongoose": "^4.0.7",
+        "uuid": "^11.1.0",
         "winston": "^3.17.0",
         "winston-mongodb": "^6.0.0"
     }
