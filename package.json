@@ -41,6 +41,7 @@
         "colorette": "^2.0.20",
         "cors": "^2.8.5",
         "cross-env": "^7.0.3",
+        "dayjs": "^1.11.13",
         "dotenv-flow": "^4.1.0",
         "express": "^4.21.2",
         "helmet": "^8.1.0",

@@ -3,10 +3,13 @@ import { responseMessage } from '../constant/responseMessage.js';
 import httpError from '../util/httpError.js';
 import { getApplicationHealth, getSystemHealth, generateRandomId, generateOtp } from '../util/quicker.js';
 import { validateJoiSchema, validateRegisterBody } from '../service/validationService.js';
-import { createUser, findUserByEmailAddress } from '../service/userServices.js';
+import { createUser, findUserByConfirmationTokenAndCode, findUserByEmailAddress } from '../service/userServices.js';
 import { userRole } from '../constant/application.js';
 import config from '../config/config.js';
 import sendEmail from '../service/emailService.js';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc.js';
+dayjs.extend(utc);
 
 const self = (req, res, next) => {
     try {
@@ -40,7 +43,6 @@ const register = async (req, res, next) => {
         const { name, emailAddress, password, consent } = value;
 
         const existingUser = await findUserByEmailAddress(emailAddress);
-
         if (existingUser) {
             return httpError(next, new Error(responseMessage.ALREADY_EXIST('User', emailAddress)), req, 422);
         }
@@ -69,7 +71,6 @@ const register = async (req, res, next) => {
         };
 
         const createdUser = await createUser(payload);
-
         if (!createdUser) {
             return httpError(next, new Error(responseMessage.SOMETHING_WENT_WRONG), req, 400);
         }
@@ -78,7 +79,6 @@ const register = async (req, res, next) => {
         const to = [emailAddress];
         const subject = 'Confirm Your Account';
         const text = `Hey ${name} , Please confirm your acccount by clicking on the link given below\n\n ${confirmationUrl}`;
-
         sendEmail(to, subject, text);
 
         httpResponse(req, res, 201, responseMessage.SUCCESS, { _id: createdUser._id });
@@ -87,8 +87,34 @@ const register = async (req, res, next) => {
     }
 };
 
-const confirmation = (req, res) => {
-    res.send('Confirmation Endpoint');
+const confirmation = async (req, res, next) => {
+    try {
+        const { params, query } = req;
+        const { token } = params;
+        const { code } = query;
+
+        const user = await findUserByConfirmationTokenAndCode(token, code);
+        if (!user) {
+            return httpError(next, new Error(responseMessage.INVALID_CONFIRMATION_TOKEN_OR_CODE), req, 400);
+        }
+
+        if (user.accountConfirmation.status) {
+            return httpError(next, new Error(responseMessage.ACCOUNT_ALREADY_CONFIRMED), req, 400);
+        }
+
+        user.accountConfirmation.status = true;
+        user.accountConfirmation.timestamp = dayjs().utc().toDate();
+        await user.save();
+
+        const to = [user.emailAddress];
+        const subject = 'Account Confirmed';
+        const text = `Hey ${user.name} , Your account has now been confirmed.`;
+        sendEmail(to, subject, text);
+
+        httpResponse(req, res, 200, responseMessage.SUCCESS);
+    } catch (err) {
+        httpError(next, err, req, 500);
+    }
 };
 
 const login = (req, res) => {

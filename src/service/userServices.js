@@ -8,4 +8,10 @@ const createUser = (payload) => {
     return User.create(payload);
 };
 
-export { findUserByEmailAddress, createUser };
+const findUserByConfirmationTokenAndCode = (token, code) => {
+    return User.findOne({
+        'accountConfirmation.token': token,
+        'accountConfirmation.code': code
+    });
+};
+export { findUserByEmailAddress, createUser, findUserByConfirmationTokenAndCode };
