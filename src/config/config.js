@@ -11,5 +11,13 @@ export default {
     MIGRATE_AUTOSYNC: process.env.MIGRATE_AUTOSYNC,
     DISABLE_LOGS: process.env.DISABLE_LOGS,
     FRONTEND_URL: process.env.FRONTEND_URL,
-    EMAIL_SERVICE_API_KEY: process.env.EMAIL_SERVICE_API_KEY
+    EMAIL_SERVICE_API_KEY: process.env.EMAIL_SERVICE_API_KEY,
+    ACCESS_TOKEN: {
+        SECRET: process.env.ACCESS_TOKEN_SECRET,
+        EXPIRY: 3600
+    },
+    REFRESH_TOKEN: {
+        SECRET: process.env.REFRESH_TOKEN_SECRET,
+        EXPIRY: 3600 * 24 * 365
+    }
 };

@@ -1,7 +1,8 @@
 import User from '../model/userModel.js';
+import RefreshToken from '../model/refreshTokenModel.js';
 
-const findUserByEmailAddress = (emailAddress) => {
-    return User.findOne({ emailAddress });
+const findUserByEmailAddress = (emailAddress, select = '') => {
+    return User.findOne({ emailAddress }).select(select);
 };
 
 const createUser = (payload) => {
@@ -14,4 +15,8 @@ const findUserByConfirmationTokenAndCode = (token, code) => {
         'accountConfirmation.code': code
     });
 };
-export { findUserByEmailAddress, createUser, findUserByConfirmationTokenAndCode };
+
+const createRefreshToken = (payload) => {
+    return RefreshToken.create(payload);
+};
+export { findUserByEmailAddress, createUser, findUserByConfirmationTokenAndCode, createRefreshToken };

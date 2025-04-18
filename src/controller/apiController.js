@@ -1,10 +1,10 @@
 import httpResponse from '../util/httpResponse.js';
 import { responseMessage } from '../constant/responseMessage.js';
 import httpError from '../util/httpError.js';
-import { getApplicationHealth, getSystemHealth, generateRandomId, generateOtp } from '../util/quicker.js';
-import { validateJoiSchema, validateRegisterBody } from '../service/validationService.js';
-import { createUser, findUserByConfirmationTokenAndCode, findUserByEmailAddress } from '../service/userServices.js';
-import { userRole } from '../constant/application.js';
+import { getApplicationHealth, getSystemHealth, generateRandomId, generateOtp, generateToken } from '../util/quicker.js';
+import { validateJoiSchema, validateRegisterBody, validateLoginBody } from '../service/validationService.js';
+import { createUser, findUserByConfirmationTokenAndCode, findUserByEmailAddress, createRefreshToken } from '../service/userServices.js';
+import { userRole, applicationEnvironment } from '../constant/application.js';
 import config from '../config/config.js';
 import sendEmail from '../service/emailService.js';
 import dayjs from 'dayjs';
@@ -117,8 +117,63 @@ const confirmation = async (req, res, next) => {
     }
 };
 
-const login = (req, res) => {
-    res.send('Login Endpoint');
+const login = async (req, res, next) => {
+    try {
+        const { value, error } = validateJoiSchema(validateLoginBody, req.body);
+        if (error) {
+            return httpError(next, error, req, 422);
+        }
+
+        const { emailAddress, password } = value;
+        const user = await findUserByEmailAddress(emailAddress, '+password');
+        if (!user) {
+            return httpError(next, new Error(responseMessage.NOT_FOUND('user')), req, 404);
+        }
+
+        if (!user.accountConfirmation.status) {
+            return httpError(next, new Error(responseMessage.ACCOUNT_CONFIRMATION_REQUIRED), req, 400);
+        }
+
+        const isValidPassword = await user.matchPassword(password);
+        if (!isValidPassword) {
+            return httpError(next, new Error(responseMessage.INVALID_EMAIL_OR_PASSWORD), req, 400);
+        }
+
+        const accessToken = generateToken({ userId: user._id }, config.ACCESS_TOKEN.SECRET, config.ACCESS_TOKEN.EXPIRY);
+
+        const refreshToken = generateToken({ userId: user._id }, config.REFRESH_TOKEN.SECRET, config.REFRESH_TOKEN.EXPIRY);
+
+        user.lastLoginAt = dayjs().utc().toDate();
+        await user.save();
+
+        const refreshTokenPayload = {
+            token: refreshToken
+        };
+        await createRefreshToken(refreshTokenPayload);
+
+        let DOMAIN;
+        const url = new URL(config.SERVER_URL);
+        DOMAIN = url.hostname;
+        res.cookie('accessToken', accessToken, {
+            path: '/api/v1',
+            domain: DOMAIN,
+            sameSite: 'strict',
+            maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
+            httpOnly: true,
+            secure: !(config.ENV == applicationEnvironment.DEVELOPMENT)
+        }).cookie('refreshToken', refreshToken, {
+            path: '/api/v1',
+            domain: DOMAIN,
+            sameSite: 'strict',
+            maxAge: 1000 * config.REFRESH_TOKEN.EXPIRY,
+            httpOnly: true,
+            secure: !(config.ENV == applicationEnvironment.DEVELOPMENT)
+        });
+
+        httpResponse(req, res, 200, responseMessage.SUCCESS);
+    } catch (err) {
+        httpError(next, err, req, 500);
+    }
 };
 
 const selfIdentification = (req, res) => {
@@ -140,6 +195,7 @@ const forgotPassword = (req, res) => {
 const resetPassword = (req, res) => {
     res.send('resetPassword Endpoint');
 };
+
 const changePassword = (req, res) => {
     res.send('changePassword Endpoint');
 };

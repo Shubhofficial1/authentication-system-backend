@@ -2,6 +2,7 @@ import os from 'os';
 import config from '../config/config.js';
 import { v4 as uuidv4 } from 'uuid';
 import { randomInt } from 'crypto';
+import jwt from 'jsonwebtoken';
 
 const getSystemHealth = () => {
     return {
@@ -29,4 +30,10 @@ const generateOtp = (length) => {
     const max = Math.pow(10, length) - 1;
     return randomInt(min, max).toString();
 };
-export { getSystemHealth, getApplicationHealth, generateRandomId, generateOtp };
+
+const generateToken = (payload, secret, expiry) => {
+    return jwt.sign(payload, secret, {
+        expiresIn: expiry
+    });
+};
+export { getSystemHealth, getApplicationHealth, generateRandomId, generateOtp, generateToken };
