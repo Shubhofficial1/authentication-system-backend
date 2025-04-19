@@ -1,7 +1,7 @@
 {
-    "name": "authentication-system",
+    "name": "authentication-system-backend",
     "version": "1.0.0",
-    "description": "Authentication System Using Nodejs",
+    "description": "Authentication System Backend Using Nodejs",
     "type": "module",
     "main": "server.js",
     "scripts": {
