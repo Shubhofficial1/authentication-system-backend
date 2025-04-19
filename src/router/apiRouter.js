@@ -23,7 +23,7 @@ router.route('/confirmation/:token').put(rateLimit, confirmation);
 router.route('/login').post(rateLimit, login);
 router.route('/self-identification').get(rateLimit, protect, selfIdentification);
 router.route('/logout').put(rateLimit, protect, logout);
-router.route('/refresh-token').post(rateLimit, protect, refreshToken);
+router.route('/refresh-token').post(rateLimit, refreshToken);
 router.route('/forgot-password').put(rateLimit, forgotPassword);
 router.route('/reset-password/:token').put(rateLimit, resetPassword);
 router.route('/change-password').put(rateLimit, protect, changePassword);

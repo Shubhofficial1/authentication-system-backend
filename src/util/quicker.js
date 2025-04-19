@@ -38,7 +38,7 @@ const generateToken = (payload, secret, expiry) => {
     });
 };
 
-const validateToken = (payload, secret) => {
+const verifyToken = (payload, secret) => {
     return jwt.verify(payload, secret);
 };
 
@@ -57,7 +57,7 @@ export {
     generateRandomId,
     generateOtp,
     generateToken,
-    validateToken,
+    verifyToken,
     getDomainFromUrl,
     generateResetPasswordExpiry
 };

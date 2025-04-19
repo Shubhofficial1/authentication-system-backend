@@ -8,7 +8,7 @@ import {
     generateOtp,
     generateToken,
     getDomainFromUrl,
-    validateToken,
+    verifyToken,
     generateResetPasswordExpiry
 } from '../util/quicker.js';
 import {
@@ -245,23 +245,31 @@ const refreshToken = async (req, res, next) => {
 
         if (refreshToken) {
             const rft = await findRefreshToken(refreshToken);
-
             if (rft) {
                 const DOMAIN = getDomainFromUrl(config.SERVER_URL);
 
-                const { userId } = validateToken(refreshToken, config.REFRESH_TOKEN.SECRET);
+                let userId = null;
+                try {
+                    const decryptedJwt = verifyToken(refreshToken, config.REFRESH_TOKEN.SECRET);
+                    userId = decryptedJwt.userId;
+                    // eslint-disable-next-line no-unused-vars
+                } catch (err) {
+                    userId = null;
+                }
 
-                const accessToken = generateToken({ userId: userId }, config.ACCESS_TOKEN.SECRET, config.ACCESS_TOKEN.EXPIRY);
+                if (userId) {
+                    const newAccessToken = generateToken({ userId: userId }, config.ACCESS_TOKEN.SECRET, config.ACCESS_TOKEN.EXPIRY);
 
-                res.cookie('accessToken', accessToken, {
-                    path: '/api/v1',
-                    domain: DOMAIN,
-                    sameSite: 'strict',
-                    maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
-                    httpOnly: true,
-                    secure: !(config.ENV == applicationEnvironment.DEVELOPMENT)
-                });
-                return httpResponse(req, res, 200, responseMessage.SUCCESS, { accessToken });
+                    res.cookie('accessToken', newAccessToken, {
+                        path: '/api/v1',
+                        domain: DOMAIN,
+                        sameSite: 'strict',
+                        maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
+                        httpOnly: true,
+                        secure: !(config.ENV == applicationEnvironment.DEVELOPMENT)
+                    });
+                    return httpResponse(req, res, 200, responseMessage.SUCCESS, { accessToken: newAccessToken });
+                }
             }
         }
         httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401);
@@ -297,7 +305,7 @@ const forgotPassword = async (req, res, next) => {
 
         const resetUrl = `${config.FRONTEND_URL}/reset-password/${token}`;
         const to = [emailAddress];
-        const subject = 'Reset Your Account';
+        const subject = 'Account Password Reset Requested';
         const text = `Hey ${user.name} , Please reset your account by clicking on the link given below\n\n Link will expire within 15 minutes\n\n ${resetUrl}`;
         sendEmail(to, subject, text);
 
@@ -343,7 +351,7 @@ const resetPassword = async (req, res, next) => {
         await user.save();
 
         const to = [user.emailAddress];
-        const subject = 'Reset Account Password Successful';
+        const subject = 'Account Password Reset';
         const text = `Hey ${user.name} , your account password has been reset successfully`;
         sendEmail(to, subject, text);
 
