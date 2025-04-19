@@ -3,6 +3,7 @@ import config from '../config/config.js';
 import { v4 as uuidv4 } from 'uuid';
 import { randomInt } from 'crypto';
 import jwt from 'jsonwebtoken';
+import dayjs from 'dayjs';
 
 const getSystemHealth = () => {
     return {
@@ -46,4 +47,17 @@ const getDomainFromUrl = (url) => {
     return parsedUrl.hostname;
 };
 
-export { getSystemHealth, getApplicationHealth, generateRandomId, generateOtp, generateToken, validateToken, getDomainFromUrl };
+const generateResetPasswordExpiry = (minutes) => {
+    return dayjs().valueOf() + minutes * 60 * 1000;
+};
+
+export {
+    getSystemHealth,
+    getApplicationHealth,
+    generateRandomId,
+    generateOtp,
+    generateToken,
+    validateToken,
+    getDomainFromUrl,
+    generateResetPasswordExpiry
+};

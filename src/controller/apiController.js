@@ -8,9 +8,10 @@ import {
     generateOtp,
     generateToken,
     getDomainFromUrl,
-    validateToken
+    validateToken,
+    generateResetPasswordExpiry
 } from '../util/quicker.js';
-import { validateJoiSchema, validateRegisterBody, validateLoginBody } from '../service/validationService.js';
+import { validateJoiSchema, validateRegisterBody, validateLoginBody, validateForgotPasswordBody } from '../service/validationService.js';
 import {
     createUser,
     findUserByConfirmationTokenAndCode,
@@ -259,8 +260,41 @@ const refreshToken = async (req, res, next) => {
     }
 };
 
-const forgotPassword = (req, res) => {
-    res.send('forgotPassword Endpoint');
+const forgotPassword = async (req, res, next) => {
+    try {
+        const { value, error } = validateJoiSchema(validateForgotPasswordBody, req.body);
+        if (error) {
+            return httpError(next, error, req, 422);
+        }
+        const { emailAddress } = value;
+
+        const user = await findUserByEmailAddress(emailAddress);
+
+        if (!user) {
+            return httpError(next, new Error(responseMessage.NOT_FOUND('user')), req, 404);
+        }
+
+        if (!user.accountConfirmation.status) {
+            return httpError(next, new Error(responseMessage.ACCOUNT_CONFIRMATION_REQUIRED), req, 400);
+        }
+
+        const token = generateRandomId();
+        const expiry = generateResetPasswordExpiry(15);
+
+        user.passwordReset.token = token;
+        user.passwordReset.expiry = expiry;
+        await user.save();
+
+        const resetUrl = `${config.FRONTEND_URL}/reset-password/${token}`;
+        const to = [emailAddress];
+        const subject = 'Reset Your Account';
+        const text = `Hey ${user.name} , Please reset your account by clicking on the link given below\n\n Link will expire within 15 minutes\n\n ${resetUrl}`;
+        sendEmail(to, subject, text);
+
+        httpResponse(req, res, 200, responseMessage.SUCCESS);
+    } catch (err) {
+        httpError(next, err, req, 500);
+    }
 };
 
 const resetPassword = (req, res) => {
