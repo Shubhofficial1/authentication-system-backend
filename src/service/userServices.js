@@ -9,6 +9,10 @@ const findUserById = (id) => {
     return User.findById(id);
 };
 
+const findUserByResetToken = (token) => {
+    return User.findOne({ 'passwordReset.token': token });
+};
+
 const createUser = (payload) => {
     return User.create(payload);
 };
@@ -39,5 +43,6 @@ export {
     findUserByConfirmationTokenAndCode,
     createRefreshToken,
     deleteRefreshToken,
-    findRefreshToken
+    findRefreshToken,
+    findUserByResetToken
 };

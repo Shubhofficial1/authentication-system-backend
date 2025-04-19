@@ -16,6 +16,10 @@ export const validateForgotPasswordBody = joi.object({
     emailAddress: joi.string().email().required()
 });
 
+export const validateResetPasswordBody = joi.object({
+    newPassword: joi.string().min(8).max(24).trim().required()
+});
+
 export const validateJoiSchema = (schema, value) => {
     const result = schema.validate(value);
     return {

@@ -11,14 +11,21 @@ import {
     validateToken,
     generateResetPasswordExpiry
 } from '../util/quicker.js';
-import { validateJoiSchema, validateRegisterBody, validateLoginBody, validateForgotPasswordBody } from '../service/validationService.js';
+import {
+    validateJoiSchema,
+    validateRegisterBody,
+    validateLoginBody,
+    validateForgotPasswordBody,
+    validateResetPasswordBody
+} from '../service/validationService.js';
 import {
     createUser,
     findUserByConfirmationTokenAndCode,
     findUserByEmailAddress,
     createRefreshToken,
     deleteRefreshToken,
-    findRefreshToken
+    findRefreshToken,
+    findUserByResetToken
 } from '../service/userServices.js';
 import { userRole, applicationEnvironment } from '../constant/application.js';
 import config from '../config/config.js';
@@ -297,8 +304,50 @@ const forgotPassword = async (req, res, next) => {
     }
 };
 
-const resetPassword = (req, res) => {
-    res.send('resetPassword Endpoint');
+const resetPassword = async (req, res, next) => {
+    try {
+        const { value, error } = validateJoiSchema(validateResetPasswordBody, req.body);
+        if (error) {
+            return httpError(next, error, req, 422);
+        }
+        const { newPassword } = value;
+        const { params } = req;
+        const { token } = params;
+
+        const user = await findUserByResetToken(token);
+        if (!user) {
+            return httpError(next, new Error(responseMessage.NOT_FOUND('user')), req, 404);
+        }
+
+        if (!user.accountConfirmation.status) {
+            return httpError(next, new Error(responseMessage.ACCOUNT_CONFIRMATION_REQUIRED), req, 400);
+        }
+
+        const storedExpiry = user.passwordReset.expiry;
+        const currentTimestamp = dayjs().valueOf();
+
+        if (!storedExpiry) {
+            return httpError(next, new Error(responseMessage.INVALID_REQUEST), req, 400);
+        }
+        if (currentTimestamp > storedExpiry) {
+            return httpError(next, new Error(responseMessage.EXPIRED_URL), req, 400);
+        }
+
+        user.password = newPassword;
+        user.passwordReset.token = null;
+        user.passwordReset.expiry = null;
+        user.passwordReset.lastResetAt = dayjs().utc().toDate();
+        await user.save();
+
+        const to = [user.emailAddress];
+        const subject = 'Reset Account Password Successful';
+        const text = `Hey ${user.name} , your account password has been reset successfully`;
+        sendEmail(to, subject, text);
+
+        httpResponse(req, res, 200, responseMessage.SUCCESS);
+    } catch (err) {
+        httpError(next, err, req, 500);
+    }
 };
 
 const changePassword = (req, res) => {

@@ -8,7 +8,9 @@ const responseMessage = {
     ACCOUNT_ALREADY_CONFIRMED: 'Account already confirmed',
     ACCOUNT_CONFIRMATION_REQUIRED: 'Account not confirmed',
     INVALID_EMAIL_OR_PASSWORD: 'Invalid email address or password',
-    UNAUTHORIZED: 'You are not authorized to perform this action'
+    UNAUTHORIZED: 'You are not authorized to perform this action',
+    EXPIRED_URL: 'Your password reset url is expired',
+    INVALID_REQUEST: 'Invalid request'
 };
 
 export { responseMessage };
