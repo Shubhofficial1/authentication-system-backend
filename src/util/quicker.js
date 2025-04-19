@@ -40,4 +40,10 @@ const generateToken = (payload, secret, expiry) => {
 const validateToken = (payload, secret) => {
     return jwt.verify(payload, secret);
 };
-export { getSystemHealth, getApplicationHealth, generateRandomId, generateOtp, generateToken, validateToken };
+
+const getDomainFromUrl = (url) => {
+    const parsedUrl = new URL(url);
+    return parsedUrl.hostname;
+};
+
+export { getSystemHealth, getApplicationHealth, generateRandomId, generateOtp, generateToken, validateToken, getDomainFromUrl };

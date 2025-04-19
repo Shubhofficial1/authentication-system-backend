@@ -1,9 +1,15 @@
 import httpResponse from '../util/httpResponse.js';
 import { responseMessage } from '../constant/responseMessage.js';
 import httpError from '../util/httpError.js';
-import { getApplicationHealth, getSystemHealth, generateRandomId, generateOtp, generateToken } from '../util/quicker.js';
+import { getApplicationHealth, getSystemHealth, generateRandomId, generateOtp, generateToken, getDomainFromUrl } from '../util/quicker.js';
 import { validateJoiSchema, validateRegisterBody, validateLoginBody } from '../service/validationService.js';
-import { createUser, findUserByConfirmationTokenAndCode, findUserByEmailAddress, createRefreshToken } from '../service/userServices.js';
+import {
+    createUser,
+    findUserByConfirmationTokenAndCode,
+    findUserByEmailAddress,
+    createRefreshToken,
+    deleteRefreshToken
+} from '../service/userServices.js';
 import { userRole, applicationEnvironment } from '../constant/application.js';
 import config from '../config/config.js';
 import sendEmail from '../service/emailService.js';
@@ -151,9 +157,7 @@ const login = async (req, res, next) => {
         };
         await createRefreshToken(refreshTokenPayload);
 
-        let DOMAIN;
-        const url = new URL(config.SERVER_URL);
-        DOMAIN = url.hostname;
+        const DOMAIN = getDomainFromUrl(config.SERVER_URL);
         res.cookie('accessToken', accessToken, {
             path: '/api/v1',
             domain: DOMAIN,
@@ -185,8 +189,29 @@ const selfIdentification = (req, res, next) => {
     }
 };
 
-const logout = (req, res) => {
-    res.send('Logout Endpoint');
+const logout = async (req, res, next) => {
+    try {
+        const { cookies } = req;
+        const { refreshToken } = cookies;
+        if (refreshToken) {
+            await deleteRefreshToken(refreshToken);
+        }
+
+        const DOMAIN = getDomainFromUrl(config.SERVER_URL);
+        const cookieOptions = {
+            path: '/api/v1',
+            domain: DOMAIN,
+            sameSite: 'strict',
+            httpOnly: true,
+            secure: !(config.ENV === applicationEnvironment.DEVELOPMENT)
+        };
+        res.clearCookie('accessToken', cookieOptions);
+        res.clearCookie('refreshToken', cookieOptions);
+
+        return httpResponse(req, res, 200, responseMessage.SUCCESS);
+    } catch (err) {
+        return httpError(next, err, req, 500);
+    }
 };
 
 const refreshToken = (req, res) => {

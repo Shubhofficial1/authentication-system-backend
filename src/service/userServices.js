@@ -23,4 +23,9 @@ const findUserByConfirmationTokenAndCode = (token, code) => {
 const createRefreshToken = (payload) => {
     return RefreshToken.create(payload);
 };
-export { findUserByEmailAddress, findUserById, createUser, findUserByConfirmationTokenAndCode, createRefreshToken };
+
+const deleteRefreshToken = (token) => {
+    return RefreshToken.deleteOne({ token: token });
+};
+
+export { findUserByEmailAddress, findUserById, createUser, findUserByConfirmationTokenAndCode, createRefreshToken, deleteRefreshToken };

@@ -16,7 +16,7 @@ export default async (req, res, next) => {
                 return next();
             }
         }
-        return httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 400);
+        return httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401);
     } catch (err) {
         httpError(next, err, req, 500);
     }
