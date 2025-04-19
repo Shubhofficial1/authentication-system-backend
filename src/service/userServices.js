@@ -5,8 +5,8 @@ const findUserByEmailAddress = (emailAddress, select = '') => {
     return User.findOne({ emailAddress }).select(select);
 };
 
-const findUserById = (id) => {
-    return User.findById(id);
+const findUserById = (id, select = '') => {
+    return User.findById(id).select(select);
 };
 
 const findUserByResetToken = (token) => {

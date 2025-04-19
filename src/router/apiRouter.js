@@ -26,6 +26,6 @@ router.route('/logout').put(rateLimit, protect, logout);
 router.route('/refresh-token').post(rateLimit, protect, refreshToken);
 router.route('/forgot-password').put(rateLimit, forgotPassword);
 router.route('/reset-password/:token').put(rateLimit, resetPassword);
-router.route('/change-password').put(rateLimit, changePassword);
+router.route('/change-password').put(rateLimit, protect, changePassword);
 
 export default router;

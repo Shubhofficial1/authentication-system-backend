@@ -16,7 +16,8 @@ import {
     validateRegisterBody,
     validateLoginBody,
     validateForgotPasswordBody,
-    validateResetPasswordBody
+    validateResetPasswordBody,
+    validateChangePasswordBody
 } from '../service/validationService.js';
 import {
     createUser,
@@ -25,7 +26,8 @@ import {
     createRefreshToken,
     deleteRefreshToken,
     findRefreshToken,
-    findUserByResetToken
+    findUserByResetToken,
+    findUserById
 } from '../service/userServices.js';
 import { userRole, applicationEnvironment } from '../constant/application.js';
 import config from '../config/config.js';
@@ -168,6 +170,7 @@ const login = async (req, res, next) => {
 
         user.lastLoginAt = dayjs().utc().toDate();
         await user.save();
+        delete user.password;
 
         const refreshTokenPayload = {
             token: refreshToken
@@ -350,8 +353,42 @@ const resetPassword = async (req, res, next) => {
     }
 };
 
-const changePassword = (req, res) => {
-    res.send('changePassword Endpoint');
+const changePassword = async (req, res, next) => {
+    try {
+        const { value, error } = validateJoiSchema(validateChangePasswordBody, req.body);
+        if (error) {
+            return httpError(next, error, req, 422);
+        }
+
+        const user = await findUserById(req.authenticatedUser._id, '+password');
+        if (!user) {
+            return httpError(next, new Error(responseMessage.NOT_FOUND('user')), req, 404);
+        }
+
+        const { oldPassword, newPassword } = value;
+
+        const isPasswordMatching = await user.matchPassword(oldPassword);
+        if (!isPasswordMatching) {
+            return httpError(next, new Error(responseMessage.INVALID_OLD_PASSWORD), req, 404);
+        }
+
+        if (newPassword === oldPassword) {
+            return httpError(next, new Error(responseMessage.PASSWORD_MATCHING_WITH_OLD_PASSWORD), req, 400);
+        }
+
+        user.password = newPassword;
+        await user.save();
+        delete user.password;
+
+        const to = [user.emailAddress];
+        const subject = 'Password changed Successful';
+        const text = `Hey ${user.name} , your account password has been changed successfully`;
+        sendEmail(to, subject, text);
+
+        httpResponse(req, res, 200, responseMessage.SUCCESS);
+    } catch (err) {
+        httpError(next, err, req, 500);
+    }
 };
 
 export { self, health, register, confirmation, login, selfIdentification, logout, refreshToken, forgotPassword, resetPassword, changePassword };

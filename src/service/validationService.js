@@ -20,6 +20,12 @@ export const validateResetPasswordBody = joi.object({
     newPassword: joi.string().min(8).max(24).trim().required()
 });
 
+export const validateChangePasswordBody = joi.object({
+    oldPassword: joi.string().min(8).max(24).trim().required(),
+    newPassword: joi.string().min(8).max(24).trim().required(),
+    confirmNewPassword: joi.string().min(8).max(24).trim().valid(joi.ref('newPassword')).required()
+});
+
 export const validateJoiSchema = (schema, value) => {
     const result = schema.validate(value);
     return {
