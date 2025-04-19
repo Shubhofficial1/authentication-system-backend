@@ -28,4 +28,16 @@ const deleteRefreshToken = (token) => {
     return RefreshToken.deleteOne({ token: token });
 };
 
-export { findUserByEmailAddress, findUserById, createUser, findUserByConfirmationTokenAndCode, createRefreshToken, deleteRefreshToken };
+const findRefreshToken = (token) => {
+    return RefreshToken.findOne({ token: token });
+};
+
+export {
+    findUserByEmailAddress,
+    findUserById,
+    createUser,
+    findUserByConfirmationTokenAndCode,
+    createRefreshToken,
+    deleteRefreshToken,
+    findRefreshToken
+};

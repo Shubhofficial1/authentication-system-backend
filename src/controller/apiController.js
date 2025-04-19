@@ -1,14 +1,23 @@
 import httpResponse from '../util/httpResponse.js';
 import { responseMessage } from '../constant/responseMessage.js';
 import httpError from '../util/httpError.js';
-import { getApplicationHealth, getSystemHealth, generateRandomId, generateOtp, generateToken, getDomainFromUrl } from '../util/quicker.js';
+import {
+    getApplicationHealth,
+    getSystemHealth,
+    generateRandomId,
+    generateOtp,
+    generateToken,
+    getDomainFromUrl,
+    validateToken
+} from '../util/quicker.js';
 import { validateJoiSchema, validateRegisterBody, validateLoginBody } from '../service/validationService.js';
 import {
     createUser,
     findUserByConfirmationTokenAndCode,
     findUserByEmailAddress,
     createRefreshToken,
-    deleteRefreshToken
+    deleteRefreshToken,
+    findRefreshToken
 } from '../service/userServices.js';
 import { userRole, applicationEnvironment } from '../constant/application.js';
 import config from '../config/config.js';
@@ -208,14 +217,46 @@ const logout = async (req, res, next) => {
         res.clearCookie('accessToken', cookieOptions);
         res.clearCookie('refreshToken', cookieOptions);
 
-        return httpResponse(req, res, 200, responseMessage.SUCCESS);
+        httpResponse(req, res, 200, responseMessage.SUCCESS);
     } catch (err) {
         return httpError(next, err, req, 500);
     }
 };
 
-const refreshToken = (req, res) => {
-    res.send('refreshToken Endpoint');
+const refreshToken = async (req, res, next) => {
+    try {
+        const { cookies } = req;
+        const { refreshToken, accessToken } = cookies;
+
+        if (accessToken) {
+            return httpResponse(req, res, 200, responseMessage.SUCCESS, { accessToken });
+        }
+
+        if (refreshToken) {
+            const rft = await findRefreshToken(refreshToken);
+
+            if (rft) {
+                const DOMAIN = getDomainFromUrl(config.SERVER_URL);
+
+                const { userId } = validateToken(refreshToken, config.REFRESH_TOKEN.SECRET);
+
+                const accessToken = generateToken({ userId: userId }, config.ACCESS_TOKEN.SECRET, config.ACCESS_TOKEN.EXPIRY);
+
+                res.cookie('accessToken', accessToken, {
+                    path: '/api/v1',
+                    domain: DOMAIN,
+                    sameSite: 'strict',
+                    maxAge: 1000 * config.ACCESS_TOKEN.EXPIRY,
+                    httpOnly: true,
+                    secure: !(config.ENV == applicationEnvironment.DEVELOPMENT)
+                });
+                return httpResponse(req, res, 200, responseMessage.SUCCESS, { accessToken });
+            }
+        }
+        httpError(next, new Error(responseMessage.UNAUTHORIZED), req, 401);
+    } catch (err) {
+        httpError(next, err, req, 500);
+    }
 };
 
 const forgotPassword = (req, res) => {
