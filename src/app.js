@@ -4,12 +4,14 @@ import router from './router/apiRouter.js';
 import { globalErrorHandler, notFound } from './middleware/globalErrorHandler.js';
 import helmet from 'helmet';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 
 const __dirname = path.resolve();
 
 app.use(helmet());
+app.use(cookieParser());
 app.use(
     cors({
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],

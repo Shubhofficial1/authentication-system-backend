@@ -7,7 +7,8 @@ const responseMessage = {
     INVALID_CONFIRMATION_TOKEN_OR_CODE: 'Invalid acccount confirmation token or code',
     ACCOUNT_ALREADY_CONFIRMED: 'Account already confirmed',
     ACCOUNT_CONFIRMATION_REQUIRED: 'Account not confirmed',
-    INVALID_EMAIL_OR_PASSWORD: 'Invalid email address or password'
+    INVALID_EMAIL_OR_PASSWORD: 'Invalid email address or password',
+    UNAUTHORIZED: 'You are not authorized to perform this action'
 };
 
 export { responseMessage };

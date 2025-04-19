@@ -5,6 +5,10 @@ const findUserByEmailAddress = (emailAddress, select = '') => {
     return User.findOne({ emailAddress }).select(select);
 };
 
+const findUserById = (id) => {
+    return User.findById(id);
+};
+
 const createUser = (payload) => {
     return User.create(payload);
 };
@@ -19,4 +23,4 @@ const findUserByConfirmationTokenAndCode = (token, code) => {
 const createRefreshToken = (payload) => {
     return RefreshToken.create(payload);
 };
-export { findUserByEmailAddress, createUser, findUserByConfirmationTokenAndCode, createRefreshToken };
+export { findUserByEmailAddress, findUserById, createUser, findUserByConfirmationTokenAndCode, createRefreshToken };

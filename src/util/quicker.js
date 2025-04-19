@@ -36,4 +36,8 @@ const generateToken = (payload, secret, expiry) => {
         expiresIn: expiry
     });
 };
-export { getSystemHealth, getApplicationHealth, generateRandomId, generateOtp, generateToken };
+
+const validateToken = (payload, secret) => {
+    return jwt.verify(payload, secret);
+};
+export { getSystemHealth, getApplicationHealth, generateRandomId, generateOtp, generateToken, validateToken };

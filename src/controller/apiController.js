@@ -176,8 +176,13 @@ const login = async (req, res, next) => {
     }
 };
 
-const selfIdentification = (req, res) => {
-    res.send('Self Identification Endpoint');
+const selfIdentification = (req, res, next) => {
+    try {
+        const { authenticatedUser } = req;
+        httpResponse(req, res, 200, responseMessage.SUCCESS, authenticatedUser);
+    } catch (err) {
+        httpError(next, err, req, 500);
+    }
 };
 
 const logout = (req, res) => {

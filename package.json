@@ -39,6 +39,7 @@
     "dependencies": {
         "bcryptjs": "^3.0.2",
         "colorette": "^2.0.20",
+        "cookie-parser": "^1.4.7",
         "cors": "^2.8.5",
         "cross-env": "^7.0.3",
         "dayjs": "^1.11.13",
