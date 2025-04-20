@@ -5,6 +5,7 @@ import { globalErrorHandler, notFound } from './middleware/globalErrorHandler.js
 import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import config from './config/config.js';
 
 const app = express();
 
@@ -15,8 +16,7 @@ app.use(cookieParser());
 app.use(
     cors({
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
-        // TODO: Change below origin based on frontend server accordingly
-        origin: ['http://www.domain.com'],
+        origin: JSON.parse(config.ORIGIN),
         credentials: true
     })
 );
